@@ -1,0 +1,12 @@
+<div id="map" style="height: 600px; width: 600px"></div>
+<select formControlName="category" multiple>
+  @for (category of incidentCategories; track $index) {
+  <option [value]="category">{{ category }}</option>
+
+  }
+</select>
+
+<div>
+  <label>Рівень небезпеки: {{ filtersForm.get('severity')?.value }}</label>
+  <input type="range" formControlName="severity" min="1" [max]="5" />
+</div>
