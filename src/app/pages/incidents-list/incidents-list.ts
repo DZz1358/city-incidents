@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIcon } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,15 +8,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import * as L from 'leaflet';
 
-import { delay } from 'rxjs';
+import { debounceTime, delay, of, switchMap, tap } from 'rxjs';
 
 import { incidentSeverity } from '../../const/incident.const';
-import { IncidentCategory, IncidentSeverity } from '../../models/incident.enums';
+import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
 
@@ -30,10 +31,9 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
   fb = inject(FormBuilder);
   incidentsService = inject(IncidentsService);
   destroyRef = inject(DestroyRef);
-
+  snackbar = inject(MatSnackBar);
 
   allIncidents = signal<Incident[]>([]);
-  errorMessage = signal('');
   isLoading = signal(true);
 
   filtersForm = this.fb.group({
@@ -55,6 +55,9 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
       const incidents = this.filteredIncidents();
       if (this.map) {
         this.updateMapMarkers();
+        if (!incidents.length) {
+          this.openSnackBar('За поточними фільтрами інцидентів не знайдено');
+        }
       }
     });
   }
@@ -62,9 +65,16 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadIncidents();
 
-    this.filtersForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+    this.filtersForm.valueChanges.pipe(
+      tap(() => this.isLoading.set(true)),
+      debounceTime(1000),
+      switchMap(() => {
+        return of(null).pipe(delay(500));
+      }),
+      takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateFilteredIncidents();
+        this.isLoading.set(false)
       });
   }
 
@@ -86,7 +96,6 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
 
   private loadIncidents(): void {
     this.isLoading.set(true);
-    this.errorMessage.set('');
 
     this.incidentsService.getIncidents().pipe(
       delay(2000),
@@ -101,7 +110,7 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       error: () => {
-        this.errorMessage.set('Помилка завантаження даних');
+        this.openSnackBar('Помилка завантаження даних');
         this.isLoading.set(false);
       }
     });
@@ -123,7 +132,7 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
 
       this.updateMapMarkers();
     } catch (error) {
-      this.errorMessage.set('Помилка ініціалізації карти');
+      this.openSnackBar('Помилка ініціалізації карти');
     }
   }
 
@@ -138,7 +147,7 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
       const lng = +incident.location?.lng;
 
       if (isNaN(lat) || isNaN(lng)) {
-        console.warn('Некоректні координати для інціденту:', incident.id);
+        this.openSnackBar(`Некоректні координати для інціденту: ${incident.id}`)
         return;
       }
 
@@ -181,7 +190,6 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (dateTo) {
-      // Устанавливаем время на конец дня для фильтра "до"
       const endOfDay = new Date(dateTo);
       endOfDay.setHours(23, 59, 59, 999);
 
@@ -203,6 +211,12 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
       severity: '',
       dateFrom: null,
       dateTo: null
+    });
+  }
+
+  public openSnackBar(message: string, status = '') {
+    this.snackbar.open(message, status, {
+      duration: 15000
     });
   }
 
