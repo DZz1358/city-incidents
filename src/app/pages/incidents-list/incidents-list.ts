@@ -20,10 +20,11 @@ import { incidentSeverity } from '../../const/incident.const';
 import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
+import { Loader } from '../../components/loader/loader';
 
 @Component({
   selector: 'app-incidents-list',
-  imports: [ReactiveFormsModule, MatSidenavModule, MatIcon, MatButtonModule, MatFormFieldModule, MatInputModule, MatOption, MatSelectModule, MatDatepickerModule, MatNativeDateModule,],
+  imports: [ReactiveFormsModule, MatSidenavModule, MatIcon, MatButtonModule, MatFormFieldModule, MatInputModule, MatOption, MatSelectModule, MatDatepickerModule, MatNativeDateModule, Loader],
   templateUrl: './incidents-list.html',
   styleUrl: './incidents-list.scss'
 })
