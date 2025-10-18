@@ -1,12 +1,39 @@
 <div id="map" style="height: 600px; width: 600px"></div>
-<select formControlName="category" multiple>
-  @for (category of incidentCategories; track $index) {
-  <option [value]="category">{{ category }}</option>
 
+<div class="incidents-container" [class.loading]="isLoading()">
+  @if (isLoading()) {
+  <div class="loading">Завантаження даних...</div>
+  } @else if (errorMessage()) {
+  <div class="error">
+    {{ errorMessage() }}
+    <button (click)="refreshData()">Спробувати знову</button>
+  </div>
+  } @else {
+  <div class="filters-section" [formGroup]="filtersForm">
+    <div class="filter-group">
+      <input formControlName="search" placeholder="Пошук інцідентів..." />
+    </div>
+
+    <div class="filter-group">
+      <label>Категорії:</label>
+      <select formControlName="category" multiple>
+        @for (cat of incidentCategories; track cat) {
+        <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Рівень небезпеки: до {{ filtersForm.get('severity')?.value }}</label>
+      <input type="range" formControlName="severity" min="1" max="5" />
+    </div>
+  </div>
+
+  <div class="map-section">
+    <div id="map"></div>
+    <div class="map-stats">
+      Показано {{ filteredIncidents().length }} з {{ allIncidents().length }} інцідентів
+    </div>
+  </div>
   }
-</select>
-
-<div>
-  <label>Рівень небезпеки: {{ filtersForm.get('severity')?.value }}</label>
-  <input type="range" formControlName="severity" min="1" [max]="5" />
 </div>

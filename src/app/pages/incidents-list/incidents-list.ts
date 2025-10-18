@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { AfterViewInit, Component, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-import { BehaviorSubject, combineLatest, debounceTime, map, Observable, startWith, tap } from 'rxjs';
+import { debounceTime } from 'rxjs';
 
 import * as L from 'leaflet';
 
@@ -11,102 +12,147 @@ import { IncidentsService } from '../../services/incidents.service';
 
 @Component({
   selector: 'app-incidents-list',
-  imports: [],
+  imports: [ReactiveFormsModule],
   templateUrl: './incidents-list.html',
   styleUrl: './incidents-list.scss'
 })
 export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
+  private fb = inject(FormBuilder);
+  private incidentsService = inject(IncidentsService);
 
-  fb = inject(FormBuilder);
-  incidentsService = inject(IncidentsService);
-  filtersForm: FormGroup;
+  allIncidents = signal<Incident[]>([]);
+  errorMessage = signal('');
+  isLoading = signal(true);
+
+  filtersForm = this.fb.group({
+    search: [''],
+    category: [''],
+    severity: [5]
+  });
+
   incidentCategories = Object.values(IncidentCategory);
 
-  private allIncidents$!: Observable<Incident[]>;
-  filteredIncidents$!: Observable<Incident[]>;
-  private sortConfig$ = new BehaviorSubject<{ key: keyof Incident; direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' });
-
-  private map!: L.Map;
+  private map?: L.Map;
   private markers: L.Marker[] = [];
-
+  filteredIncidents = signal<Incident[]>([]);
 
   constructor() {
-    this.filtersForm = this.fb.group({
-      search: [''],
-      category: [[]],
-      severity: []
+    effect(() => {
+      const incidents = this.filteredIncidents();
+      if (this.map && incidents.length > 0) {
+        this.updateMapMarkers();
+      }
     });
   }
 
   ngOnInit(): void {
-    this.allIncidents$ = this.incidentsService.getIncidents();
+    this.loadIncidents();
 
-    const filters$ = this.filtersForm.valueChanges.pipe(
-      startWith(this.filtersForm.value),
-      debounceTime(300)
-    );
+    this.filtersForm.valueChanges.subscribe(() => {
+      this.updateFilteredIncidents();
+    });
+  }
 
-    this.filteredIncidents$ = combineLatest([this.allIncidents$, filters$, this.sortConfig$]).pipe(
-      map(([incidents, filters, sortConfig]) => {
-        let filtered = incidents.filter(incident => {
-          const searchMatch = incident.title.toLowerCase().includes(filters.search.toLowerCase());
-          const categoryMatch = filters.category.length === 0 || filters.category.includes(incident.category);
-          const severityMatch = incident.severity <= filters.severity;
-          return searchMatch && categoryMatch && severityMatch;
-        });
+  private updateFilteredIncidents(): void {
+    const { search, category, severity } = this.filtersForm.value;
+    const incidents = this.allIncidents();
 
-        filtered.sort((a, b) => {
-          const aValue = a[sortConfig.key];
-          const bValue = b[sortConfig.key];
-          if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-          return 0;
-        });
-        return filtered;
-      }),
-      tap(incidents => {
-        if (this.map) {
-          this.updateMapMarkers(incidents);
-        }
-      })
-    );
+    const filtered = incidents
+      .filter(i => !search || i.title.toLowerCase().includes(search.toLowerCase()))
+      .filter(i => !category?.length || category.includes(i.category))
+      .filter(i => !severity || i.severity <= severity)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    this.filteredIncidents.set(filtered);
+    this.updateMapMarkers();
+  }
+
+  private loadIncidents(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.incidentsService.getIncidents().subscribe({
+      next: (data) => {
+        this.allIncidents.set(data);
+        this.isLoading.set(false);
+        this.updateFilteredIncidents();
+      },
+      error: (err) => {
+        this.errorMessage.set('Помилка завантаження даних');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
     this.initMap();
-    this.filteredIncidents$.pipe(tap(incidents => this.updateMapMarkers(incidents))).subscribe();
   }
 
   private initMap(): void {
-    this.map = L.map('map').setView([50.4501, 30.5234], 12);
+    try {
+      this.map = L.map('map').setView([50.4501, 30.5234], 12);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(this.map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(this.map);
+
+      this.updateMapMarkers();
+    } catch (error) {
+      this.errorMessage.set('Помилка ініціалізації карти');
+    }
   }
 
-  private updateMapMarkers(incidents: Incident[]): void {
-    this.markers.forEach(marker => marker.remove());
-    this.markers = [];
+  private updateMapMarkers(): void {
+    if (!this.map) return;
 
-    incidents.forEach(incident => {
-      const marker = L.marker([incident.location.lat, incident.location.lng]).addTo(this.map);
-      marker.bindPopup(`<b>${incident.title}</b><br>Категорія: ${incident.category}`);
+    this.clearMarkers();
+    const incidents = this.filteredIncidents();
+
+    incidents.forEach((incident) => {
+      const lat = +incident.location?.lat;
+      const lng = +incident.location?.lng;
+
+      if (isNaN(lat) || isNaN(lng)) {
+        console.warn('Некоректні координати для інціденту:', incident.id);
+        return;
+      }
+
+      const marker = L.marker([lat, lng])
+        .addTo(this.map!)
+        .bindPopup(this.createPopupContent(incident));
+
       this.markers.push(marker);
     });
+
+    if (this.markers.length > 0) {
+      const group = L.featureGroup(this.markers);
+      this.map.fitBounds(group.getBounds().pad(0.1));
+    }
   }
 
-  setSort(key: keyof Incident): void {
-    const currentConfig = this.sortConfig$.value;
-    const direction = (currentConfig.key === key && currentConfig.direction === 'desc') ? 'asc' : 'desc';
-    this.sortConfig$.next({ key, direction });
+  private clearMarkers(): void {
+    this.markers.forEach(m => this.map?.removeLayer(m));
+    this.markers = [];
+  }
+
+
+  private createPopupContent(incident: Incident): string {
+    return `
+      <div class="incident-popup">
+        <h4>${incident.title}</h4>
+        <p><strong>Категорія:</strong> ${incident.category}</p>
+        <p><strong>Рівень небезпеки:</strong> ${incident.severity}/5</p>
+        <p>${incident.description ?? ''}</p>
+        <em>${new Date(incident.createdAt).toLocaleDateString()}</em>
+      </div>
+    `;
+  }
+
+  refreshData(): void {
+    this.loadIncidents();
   }
 
   ngOnDestroy(): void {
-    if (this.map) {
-      this.map.remove();
-    }
+    this.map?.remove();
   }
 }
-
-
