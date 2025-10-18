@@ -3,10 +3,12 @@ import { RouterOutlet } from '@angular/router';
 
 import * as L from 'leaflet';
 
+import { Header } from './components/header/header';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Header],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

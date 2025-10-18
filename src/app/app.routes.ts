@@ -2,9 +2,14 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: 'incidents',
+    path: 'incidents-map',
     loadComponent: () =>
       import('./pages/incidents-list/incidents-list').then(c => c.IncidentsList),
+  },
+  {
+    path: 'incidents-table',
+    loadComponent: () =>
+      import('./pages/incidents-table/incidents-table').then(c => c.IncidentsTable),
   },
   {
     path: 'incidents/:id',
@@ -13,11 +18,11 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: '/incidents',
+    redirectTo: '/incidents-table',
     pathMatch: 'full',
   },
   {
     path: '**',
-    redirectTo: '/incidents',
+    redirectTo: '/incidents-table',
   },
 ];
