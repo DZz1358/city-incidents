@@ -1,39 +1,74 @@
-<div id="map" style="height: 600px; width: 600px"></div>
-
-<div class="incidents-container" [class.loading]="isLoading()">
-  @if (isLoading()) {
-  <div class="loading">Завантаження даних...</div>
-  } @else if (errorMessage()) {
-  <div class="error">
-    {{ errorMessage() }}
-    <button (click)="refreshData()">Спробувати знову</button>
-  </div>
-  } @else {
-  <div class="filters-section" [formGroup]="filtersForm">
-    <div class="filter-group">
-      <input formControlName="search" placeholder="Пошук інцідентів..." />
+<mat-sidenav-container class="sidebar-container">
+  <!-- Сайдбар с фильтрами -->
+  <mat-sidenav
+    #filterSidebar
+    position="start"
+    mode="over"
+    class="filter-sidebar"
+    [fixedInViewport]="false"
+    [fixedTopGap]="0"
+    [fixedBottomGap]="0"
+  >
+    <div class="sidebar-header">
+      <button mat-icon-button (click)="filterSidebar.close()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
 
-    <div class="filter-group">
-      <label>Категорії:</label>
-      <select formControlName="category" multiple>
-        @for (cat of incidentCategories; track cat) {
-        <option [value]="cat">{{ cat }}</option>
-        }
-      </select>
+    <div class="filter-content">
+      <form action="" [formGroup]="filtersForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Дата від</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Дата до</mat-label>
+          <input matInput [matDatepicker]="pickerTo" formControlName="dateTo" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Категорія інцидента</mat-label>
+          <mat-select formControlName="category" multiple>
+            @for (cat of incidentCategories; track cat) {
+            <mat-option [value]="cat">{{ cat }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Важливість</mat-label>
+          <mat-select formControlName="severity">
+            @for (sev of incidentSeverity; track sev) {
+            <mat-option [value]="sev.value">{{ sev.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </form>
     </div>
 
-    <div class="filter-group">
-      <label>Рівень небезпеки: до {{ filtersForm.get('severity')?.value }}</label>
-      <input type="range" formControlName="severity" min="1" max="5" />
+    <div class="sidebar-actions">
+      <button mat-stroked-button class="reset-btn" (click)="resetFilters()">Скинути фільтра</button>
     </div>
-  </div>
+  </mat-sidenav>
 
-  <div class="map-section">
-    <div id="map"></div>
-    <div class="map-stats">
-      Показано {{ filteredIncidents().length }} з {{ allIncidents().length }} інцідентів
+  <mat-sidenav-content>
+    <button matMiniFab class="open-filter-btn" (click)="filterSidebar.open()">
+      <mat-icon>filter_list</mat-icon>
+    </button>
+
+    <div class="main-content">
+      @if (isLoading()) {
+      <div class="loader-overlay">
+        <span class="loader"></span>
+      </div>
+      }
+
+      <div id="map"></div>
     </div>
-  </div>
-  }
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

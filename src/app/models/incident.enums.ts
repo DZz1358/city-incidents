@@ -22,9 +22,13 @@ export enum IncidentCategory {
 }
 
 export enum IncidentSeverity {
+  All = 'All',
   Low = 1,
   Minor = 2,
   Medium = 3,
   High = 4,
   Critical = 5,
 }
+
+
+

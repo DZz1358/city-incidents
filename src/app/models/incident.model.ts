@@ -2,7 +2,7 @@ export interface Incident {
   id: number;
   title: string;
   category: string;
-  severity: number;
+  severity: number | string;
   createdAt: string;
   location: Location;
   description: string;

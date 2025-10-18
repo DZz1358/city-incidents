@@ -1,33 +1,50 @@
-import { AfterViewInit, Component, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatIcon } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 
 import * as L from 'leaflet';
 
-import { IncidentCategory } from '../../models/incident.enums';
+import { delay } from 'rxjs';
+
+import { incidentSeverity } from '../../const/incident.const';
+import { IncidentCategory, IncidentSeverity } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
 
 @Component({
   selector: 'app-incidents-list',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatSidenavModule, MatIcon, MatButtonModule, MatFormFieldModule, MatInputModule, MatOption, MatSelectModule, MatDatepickerModule, MatNativeDateModule,],
   templateUrl: './incidents-list.html',
   styleUrl: './incidents-list.scss'
 })
 export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
-  private fb = inject(FormBuilder);
-  private incidentsService = inject(IncidentsService);
+  fb = inject(FormBuilder);
+  incidentsService = inject(IncidentsService);
+  destroyRef = inject(DestroyRef);
+
 
   allIncidents = signal<Incident[]>([]);
   errorMessage = signal('');
   isLoading = signal(true);
 
   filtersForm = this.fb.group({
-    search: [''],
-    category: [''],
-    severity: [5]
+    category: [[] as string[]],
+    severity: [''],
+    dateFrom: [],
+    dateTo: []
   });
 
   incidentCategories = Object.values(IncidentCategory);
+  incidentSeverity = incidentSeverity;
 
   private map?: L.Map;
   private markers: L.Marker[] = [];
@@ -36,7 +53,7 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const incidents = this.filteredIncidents();
-      if (this.map && incidents.length > 0) {
+      if (this.map) {
         this.updateMapMarkers();
       }
     });
@@ -45,36 +62,45 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadIncidents();
 
-    this.filtersForm.valueChanges.subscribe(() => {
-      this.updateFilteredIncidents();
-    });
+    this.filtersForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.updateFilteredIncidents();
+      });
   }
 
   private updateFilteredIncidents(): void {
-    const { search, category, severity } = this.filtersForm.value;
+    const { category, severity, dateFrom, dateTo } = this.filtersForm.value;
     const incidents = this.allIncidents();
 
     const filtered = incidents
-      .filter(i => !search || i.title.toLowerCase().includes(search.toLowerCase()))
       .filter(i => !category?.length || category.includes(i.category))
-      .filter(i => !severity || i.severity <= severity)
+      .filter(i => !severity || severity === i.severity)
+      .filter(i => this.filterByDate(
+        i.createdAt,
+        dateFrom ?? null,
+        dateTo ?? null
+      ))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
     this.filteredIncidents.set(filtered);
-    this.updateMapMarkers();
   }
 
   private loadIncidents(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    this.incidentsService.getIncidents().subscribe({
+    this.incidentsService.getIncidents().pipe(
+      delay(2000),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (data) => {
         this.allIncidents.set(data);
         this.isLoading.set(false);
         this.updateFilteredIncidents();
+        if (!this.map) {
+          this.initMap();
+        }
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage.set('Помилка завантаження даних');
         this.isLoading.set(false);
       }
@@ -82,7 +108,9 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    if (!this.isLoading()) {
+      this.initMap();
+    }
   }
 
   private initMap(): void {
@@ -145,8 +173,37 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
     `;
   }
 
+  private filterByDate(incidentDate: string, dateFrom: Date | null, dateTo: Date | null): boolean {
+    const incidentDateObj = new Date(incidentDate);
+
+    if (dateFrom && incidentDateObj < dateFrom) {
+      return false;
+    }
+
+    if (dateTo) {
+      // Устанавливаем время на конец дня для фильтра "до"
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      if (incidentDateObj > endOfDay) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   refreshData(): void {
     this.loadIncidents();
+  }
+
+  resetFilters() {
+    this.filtersForm.patchValue({
+      category: [],
+      severity: '',
+      dateFrom: null,
+      dateTo: null
+    });
   }
 
   ngOnDestroy(): void {
