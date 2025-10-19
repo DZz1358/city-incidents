@@ -83,7 +83,7 @@ export class IncidentDetails implements OnInit, AfterViewInit {
     }
 
     try {
-      this.map = L.map('map').setView([50.4501, 30.5234], 12);
+      this.map = L.map('map').setView([currentIncident.location.lat, currentIncident.location.lng], 12);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
@@ -109,7 +109,6 @@ export class IncidentDetails implements OnInit, AfterViewInit {
       .addTo(this.map!)
     this.markers.push(marker);
   }
-
 
   goBack() {
     this.router.navigate(['/incidents']);
