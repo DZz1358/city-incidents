@@ -1,0 +1,35 @@
+<form [formGroup]="filtersForm">
+  <mat-form-field appearance="outline">
+    <mat-label>Дата від</mat-label>
+    <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom" />
+    <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+    <mat-datepicker #pickerFrom></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Дата до</mat-label>
+    <input matInput [matDatepicker]="pickerTo" formControlName="dateTo" />
+    <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+    <mat-datepicker #pickerTo></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Категорія інцидента</mat-label>
+    <mat-select formControlName="category" multiple>
+      @for (cat of incidentCategories; track cat) {
+      <mat-option [value]="cat">{{ cat }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Важливість</mat-label>
+    <mat-select formControlName="severity">
+      @for (sev of incidentSeverity; track sev) {
+      <mat-option [value]="sev.value">{{ sev.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button mat-stroked-button (click)="resetFilters()">Скинути фільтра</button>
+</form>

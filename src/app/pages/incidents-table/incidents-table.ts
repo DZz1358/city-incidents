@@ -19,16 +19,18 @@ import { Router } from '@angular/router';
 import { debounceTime, delay, distinctUntilChanged, Subject, tap } from 'rxjs';
 
 import { incidentSeverity } from '../../const/incident.const';
+import { IFilters } from '../../models/Filters';
 import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { SeverityColorPipe } from '../../pipes/severity-color.pipe';
 import { SeverityTextPipe } from '../../pipes/severity-text.pipe';
 import { IncidentsService } from '../../services/incidents.service';
+import { Filters } from '../../components/filters/filters';
 import { Loader } from '../../components/loader/loader';
 
 @Component({
   selector: 'app-incidents-table',
-  imports: [FormsModule, ReactiveFormsModule, SeverityColorPipe, SeverityTextPipe, MatSelectModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader],
+  imports: [FormsModule, ReactiveFormsModule, SeverityColorPipe, SeverityTextPipe, MatSelectModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader, Filters],
   templateUrl: './incidents-table.html',
   styleUrl: './incidents-table.scss'
 })
@@ -37,22 +39,17 @@ export class IncidentsTable implements AfterViewInit, OnInit {
   incidentsService = inject(IncidentsService);
   destroyRef = inject(DestroyRef);
   snackbar = inject(MatSnackBar);
-  router = inject(Router)
+  router = inject(Router);
+
 
   displayedColumns: string[] = ['id', 'title', 'category', 'severity', 'createdAt', 'location', 'settings'];
   dataSource = new MatTableDataSource<Incident>([]);
-  private searchSubject = new Subject<string>();
-
+  searchSubject = new Subject<string>();
+  filter = signal<IFilters>({ category: [], severity: null, dateFrom: null, dateTo: null });
+  originalData = signal<Incident[]>([]);
   isLoading = signal(true);
-  incidentCategories = Object.values(IncidentCategory);
-  incidentSeverity = incidentSeverity;
-
-  filtersForm = this.fb.group({
-    category: [[] as string[]],
-    severity: [''],
-    dateFrom: [],
-    dateTo: []
-  });
+  incidentCategories = signal(Object.values(IncidentCategory));
+  incidentSeverity = signal(incidentSeverity);
 
   readonly paginator = viewChild.required<MatPaginator>('paginator');
   readonly sort = viewChild.required<MatSort>('sort');
@@ -69,6 +66,44 @@ export class IncidentsTable implements AfterViewInit, OnInit {
       this.dataSource.filter = filterValue.trim().toLowerCase();
       this.isLoading.set(false);
     });
+  }
+
+  onFilterChange(newFilter: IFilters) {
+    this.filter.set(newFilter);
+    this.updateFilteredIncidents();
+  }
+  private updateFilteredIncidents(): void {
+    const { category, severity, dateFrom, dateTo } = this.filter();
+    const filteredData = this.originalData().filter(item => {
+      const matchesCategory = !category?.length || category.includes(item.category);
+      const matchesSeverity = !severity || item.severity === severity;
+
+      let matchesDate = true;
+      if (dateFrom || dateTo) {
+        const incidentDate = new Date(item.createdAt);
+        incidentDate.setHours(0, 0, 0, 0);
+
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          fromDate.setHours(0, 0, 0, 0);
+          matchesDate = matchesDate && incidentDate >= fromDate;
+        }
+
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          toDate.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && incidentDate <= toDate;
+        }
+      }
+
+      return matchesCategory && matchesSeverity && matchesDate;
+    });
+
+    this.dataSource.data = filteredData;
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
   }
 
   ngAfterViewInit() {
@@ -100,6 +135,7 @@ export class IncidentsTable implements AfterViewInit, OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (data) => {
+        this.originalData.set(data);
         this.dataSource.data = data;
         this.isLoading.set(false);
       },

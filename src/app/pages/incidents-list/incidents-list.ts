@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, model, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIcon } from '@angular/material/icon';
@@ -16,15 +16,15 @@ import * as L from 'leaflet';
 
 import { debounceTime, delay, of, switchMap, tap } from 'rxjs';
 
-import { incidentSeverity } from '../../const/incident.const';
-import { IncidentCategory } from '../../models/incident.enums';
+import { IFilters } from '../../models/Filters';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
+import { Filters } from '../../components/filters/filters';
 import { Loader } from '../../components/loader/loader';
 
 @Component({
   selector: 'app-incidents-list',
-  imports: [ReactiveFormsModule, MatSidenavModule, MatIcon, MatButtonModule, MatFormFieldModule, MatInputModule, MatOption, MatSelectModule, MatDatepickerModule, MatNativeDateModule, Loader],
+  imports: [MatSidenavModule, MatIcon, Loader, Filters, MatButtonModule,],
   templateUrl: './incidents-list.html',
   styleUrl: './incidents-list.scss'
 })
@@ -36,16 +36,7 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
 
   allIncidents = signal<Incident[]>([]);
   isLoading = signal(true);
-
-  filtersForm = this.fb.group({
-    category: [[] as string[]],
-    severity: [''],
-    dateFrom: [],
-    dateTo: []
-  });
-
-  incidentCategories = Object.values(IncidentCategory);
-  incidentSeverity = incidentSeverity;
+  filter = signal<IFilters>({ category: [], severity: null, dateFrom: null, dateTo: null });
 
   private map?: L.Map;
   private markers: L.Marker[] = [];
@@ -65,22 +56,14 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadIncidents();
-
-    this.filtersForm.valueChanges.pipe(
-      tap(() => this.isLoading.set(true)),
-      debounceTime(1000),
-      switchMap(() => {
-        return of(null).pipe(delay(500));
-      }),
-      takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.updateFilteredIncidents();
-        this.isLoading.set(false)
-      });
   }
 
+  onFilterChange(newFilter: IFilters) {
+    this.filter.set(newFilter);
+    this.updateFilteredIncidents();
+  }
   private updateFilteredIncidents(): void {
-    const { category, severity, dateFrom, dateTo } = this.filtersForm.value;
+    const { category, severity, dateFrom, dateTo } = this.filter();
     const incidents = this.allIncidents();
 
     const filtered = incidents
@@ -204,15 +187,6 @@ export class IncidentsList implements OnInit, AfterViewInit, OnDestroy {
 
   refreshData(): void {
     this.loadIncidents();
-  }
-
-  resetFilters() {
-    this.filtersForm.patchValue({
-      category: [],
-      severity: '',
-      dateFrom: null,
-      dateTo: null
-    });
   }
 
   public openSnackBar(message: string, status = '') {

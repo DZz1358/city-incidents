@@ -84,3 +84,8 @@ body {
   font-weight: 500;
   display: inline-block;
 }
+
+mat-form-field {
+  width: 100%;
+  max-width: 320px;
+}
