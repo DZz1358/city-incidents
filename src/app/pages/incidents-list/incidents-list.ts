@@ -16,7 +16,7 @@ import * as L from 'leaflet';
 
 import { debounceTime, delay, of, switchMap, tap } from 'rxjs';
 
-import { IFilters } from '../../models/Filters';
+import { IFilters } from '../../models/filters.model';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
 import { Filters } from '../../components/filters/filters';

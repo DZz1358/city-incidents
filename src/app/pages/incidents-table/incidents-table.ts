@@ -19,7 +19,7 @@ import { Router } from '@angular/router';
 import { debounceTime, delay, distinctUntilChanged, Subject, tap } from 'rxjs';
 
 import { incidentSeverity } from '../../const/incident.const';
-import { IFilters } from '../../models/Filters';
+import { IFilters } from '../../models/filters.model';
 import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { SeverityColorPipe } from '../../pipes/severity-color.pipe';

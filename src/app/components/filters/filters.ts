@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { debounceTime, tap } from 'rxjs';
 
 import { incidentSeverity } from '../../const/incident.const';
-import { IFilters } from '../../models/Filters';
+import { IFilters } from '../../models/filters.model';
 import { IncidentCategory } from '../../models/incident.enums';
 
 
@@ -26,13 +26,12 @@ export class Filters {
   fb = inject(FormBuilder);
   destroyRef = inject(DestroyRef);
 
-  readonly initialFilter = input<IFilters>({ category: [], severity: null, dateFrom: null, dateTo: null });
+  initialFilter = input<IFilters>({ category: [], severity: null, dateFrom: null, dateTo: null });
+  filterChange = output<IFilters>();
+  isLoading = model(false);
 
-  readonly filterChange = output<IFilters>();
-  readonly isLoading = model(false);
-
-  incidentCategories = Object.values(IncidentCategory);
-  incidentSeverity = incidentSeverity;
+  incidentCategories = signal(Object.values(IncidentCategory));
+  incidentSeverity = signal(incidentSeverity);
 
   filtersForm = this.fb.group({
     category: [[] as string[]],
@@ -48,7 +47,6 @@ export class Filters {
       debounceTime(1000),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(val => {
-      console.log('val', val);
       this.filterChange.emit({
         severity: val.severity != null ? Number(val.severity) : null,
         category: val.category ?? [],
@@ -60,11 +58,6 @@ export class Filters {
   }
 
   resetFilters() {
-    this.filtersForm.patchValue({
-      category: [],
-      severity: null,
-      dateFrom: null,
-      dateTo: null
-    });
+    this.filtersForm.reset();
   }
 }
