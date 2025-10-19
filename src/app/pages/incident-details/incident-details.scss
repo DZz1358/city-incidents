@@ -84,40 +84,6 @@
   display: inline-block;
 }
 
-.severity-badge {
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  display: inline-block;
-
-  &.low {
-    background: #e8f5e8;
-    color: #2e7d32;
-  }
-
-  &.minor {
-    background: #f0f4ff;
-    color: #2196f3;
-  }
-
-  &.medium {
-    background: #fff3e0;
-    color: #ff9800;
-  }
-
-  &.high {
-    background: #ffebee;
-    color: #f44336;
-  }
-
-  &.critical {
-    background: #fce4ec;
-    color: #e91e63;
-  }
-}
-
 .description {
   background: #f5f5f5;
   padding: 12px;

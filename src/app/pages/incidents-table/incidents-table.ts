@@ -21,12 +21,14 @@ import { debounceTime, delay, distinctUntilChanged, Subject, tap } from 'rxjs';
 import { incidentSeverity } from '../../const/incident.const';
 import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
+import { SeverityColorPipe } from '../../pipes/severity-color.pipe';
+import { SeverityTextPipe } from '../../pipes/severity-text.pipe';
 import { IncidentsService } from '../../services/incidents.service';
 import { Loader } from '../../components/loader/loader';
 
 @Component({
   selector: 'app-incidents-table',
-  imports: [FormsModule, ReactiveFormsModule, MatOption, MatSelectModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader],
+  imports: [FormsModule, ReactiveFormsModule, SeverityColorPipe, SeverityTextPipe, MatSelectModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader],
   templateUrl: './incidents-table.html',
   styleUrl: './incidents-table.scss'
 })
@@ -112,21 +114,10 @@ export class IncidentsTable implements AfterViewInit, OnInit {
     const filterValue = (event.target as HTMLInputElement).value;
     this.searchSubject.next(filterValue);
   }
+
   navigateToDetailsIncident(id: number) {
     this.router.navigate([`/incidents/${id}`])
   }
-
-  getSeverityColor(severity: number): string {
-    switch (severity) {
-      case 1: return 'low';
-      case 2: return 'minor';
-      case 3: return 'medium';
-      case 4: return 'high';
-      case 5: return 'critical';
-      default: return 'low';
-    }
-  }
-
 
   public openSnackBar(message: string) {
     this.snackbar.open(message, 'Закрити', {

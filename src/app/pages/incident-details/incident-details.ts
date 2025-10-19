@@ -12,13 +12,15 @@ import * as L from 'leaflet';
 import { delay } from 'rxjs';
 
 import { Incident } from '../../models/incident.model';
+import { SeverityColorPipe } from '../../pipes/severity-color.pipe';
+import { SeverityTextPipe } from '../../pipes/severity-text.pipe';
 import { IncidentsService } from '../../services/incidents.service';
 import { Loader } from '../../components/loader/loader';
 
 
 @Component({
   selector: 'app-incident-details',
-  imports: [MatIcon, Loader, MatCard, MatCardHeader, MatCardTitle, MatCardSubtitle, MatCardContent, DatePipe, MatButton],
+  imports: [MatIcon, Loader, MatCard, MatCardHeader, MatCardTitle, MatCardSubtitle, MatCardContent, DatePipe, MatButton, SeverityColorPipe, SeverityTextPipe],
   templateUrl: './incident-details.html',
   styleUrl: './incident-details.scss'
 })
@@ -111,28 +113,6 @@ export class IncidentDetails implements OnInit, AfterViewInit {
 
   goBack() {
     this.router.navigate(['/incidents']);
-  }
-
-  getSeverityColor(severity: number): string {
-    switch (severity) {
-      case 1: return 'low';
-      case 2: return 'minor';
-      case 3: return 'medium';
-      case 4: return 'high';
-      case 5: return 'critical';
-      default: return 'low';
-    }
-  }
-
-  getSeverityText(severity: number): string {
-    const severityMap: { [key: number]: string } = {
-      1: 'Низький',
-      2: 'Помірний',
-      3: 'Середній',
-      4: 'Високий',
-      5: 'Критичний'
-    };
-    return severityMap[severity] || 'Невідомо';
   }
 
   private openSnackBar(message: string) {

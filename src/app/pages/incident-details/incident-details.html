@@ -32,8 +32,8 @@
 
           <div class="detail-item">
             <strong>Рівень небезпеки:</strong>
-            <span class="severity-badge" [class]="getSeverityColor(+incident()!.severity)">
-              {{ getSeverityText(+incident()!.severity) }} ({{ incident()!.severity }}/5)
+            <span class="severity-badge" [class]="+incident()!.severity | severityColor">
+              {{ +incident()!.severity | severityText }} ({{ incident()!.severity }}/5)
             </span>
           </div>
 
