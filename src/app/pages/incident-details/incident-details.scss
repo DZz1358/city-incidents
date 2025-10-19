@@ -1,0 +1,126 @@
+.incident-details-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.incident-card {
+  max-width: 500px;
+}
+
+.header-actions {
+  margin-left: 20px;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+
+  p {
+    margin-top: 16px;
+    color: #666;
+  }
+}
+
+.error-state,
+.not-found {
+  text-align: center;
+  padding: 10px;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #f44336;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin-bottom: 8px;
+    color: #333;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 20px;
+  }
+}
+
+.incident-card {
+  margin-bottom: 20px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  strong {
+    color: #333;
+    font-weight: 500;
+  }
+}
+
+.category-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.severity-badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+
+  &.low {
+    background: #e8f5e8;
+    color: #2e7d32;
+  }
+
+  &.minor {
+    background: #f0f4ff;
+    color: #2196f3;
+  }
+
+  &.medium {
+    background: #fff3e0;
+    color: #ff9800;
+  }
+
+  &.high {
+    background: #ffebee;
+    color: #f44336;
+  }
+
+  &.critical {
+    background: #fce4ec;
+    color: #e91e63;
+  }
+}
+
+.description {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  line-height: 1.5;
+}

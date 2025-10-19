@@ -1,1 +1,59 @@
-<p>incident-details works!</p>
+<div class="header-actions">
+  <button mat-stroked-button (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    Назад до списку
+  </button>
+</div>
+
+<div class="incident-details-container">
+  @if (isLoading()) {
+  <app-loader />
+  }
+
+  <div id="map" style="width: 500px; height: 400px"></div>
+
+  @if (incident()) {
+  <div class="incident-content">
+    <mat-card class="incident-card">
+      <mat-card-header>
+        <mat-card-title>{{ incident()!.title }}</mat-card-title>
+        <mat-card-subtitle>
+          ID: {{ incident()!.id }} | Створено:
+          {{ incident()!.createdAt | date : 'dd.MM.yyyy HH:mm' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="details-grid">
+          <div class="detail-item">
+            <strong>Категорія:</strong>
+            <span class="category-badge">{{ incident()!.category }}</span>
+          </div>
+
+          <div class="detail-item">
+            <strong>Рівень небезпеки:</strong>
+            <span class="severity-badge" [class]="getSeverityColor(+incident()!.severity)">
+              {{ getSeverityText(+incident()!.severity) }} ({{ incident()!.severity }}/5)
+            </span>
+          </div>
+
+          <div class="detail-item">
+            <strong>Локація:</strong>
+            <span>Ш: {{ incident()!.location.lat }}, Д: {{ incident()!.location.lng }}</span>
+          </div>
+
+          <div class="detail-item full-width">
+            <strong>Опис:</strong>
+            <p class="description">{{ incident()!.description || 'Опис відсутній' }}</p>
+          </div>
+
+          <div class="detail-item">
+            <strong>Дата створення:</strong>
+            <span>{{ incident()!.createdAt | date : 'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  }
+</div>

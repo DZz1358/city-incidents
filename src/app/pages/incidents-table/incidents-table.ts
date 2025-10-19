@@ -2,7 +2,7 @@ import { AfterViewInit, Component, DestroyRef, inject, OnInit, signal, viewChild
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -11,29 +11,46 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIcon } from '@angular/material/icon';
 import { DatePipe } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatOption } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
 
 import { debounceTime, delay, distinctUntilChanged, Subject, tap } from 'rxjs';
 
+import { incidentSeverity } from '../../const/incident.const';
+import { IncidentCategory } from '../../models/incident.enums';
 import { Incident } from '../../models/incident.model';
 import { IncidentsService } from '../../services/incidents.service';
 import { Loader } from '../../components/loader/loader';
 
 @Component({
   selector: 'app-incidents-table',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader],
+  imports: [FormsModule, ReactiveFormsModule, MatOption, MatSelectModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatSidenavModule, MatButtonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatIcon, DatePipe, Loader],
   templateUrl: './incidents-table.html',
   styleUrl: './incidents-table.scss'
 })
 export class IncidentsTable implements AfterViewInit, OnInit {
+  fb = inject(FormBuilder);
   incidentsService = inject(IncidentsService);
   destroyRef = inject(DestroyRef);
   snackbar = inject(MatSnackBar);
+  router = inject(Router)
 
   displayedColumns: string[] = ['id', 'title', 'category', 'severity', 'createdAt', 'location', 'settings'];
   dataSource = new MatTableDataSource<Incident>([]);
   private searchSubject = new Subject<string>();
 
   isLoading = signal(true);
+  incidentCategories = Object.values(IncidentCategory);
+  incidentSeverity = incidentSeverity;
+
+  filtersForm = this.fb.group({
+    category: [[] as string[]],
+    severity: [''],
+    dateFrom: [],
+    dateTo: []
+  });
 
   readonly paginator = viewChild.required<MatPaginator>('paginator');
   readonly sort = viewChild.required<MatSort>('sort');
@@ -43,7 +60,7 @@ export class IncidentsTable implements AfterViewInit, OnInit {
 
     this.searchSubject.pipe(
       tap(() => this.isLoading.set(true)),
-      debounceTime(1000),
+      debounceTime(500),
       distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(filterValue => {
@@ -96,7 +113,7 @@ export class IncidentsTable implements AfterViewInit, OnInit {
     this.searchSubject.next(filterValue);
   }
   navigateToDetailsIncident(id: number) {
-    console.log('Navigate to incident:', id);
+    this.router.navigate([`/incidents/${id}`])
   }
 
   getSeverityColor(severity: number): string {
