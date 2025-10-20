@@ -1,16 +1,15 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'severityText'
+  name: 'severityText',
 })
 export class SeverityTextPipe implements PipeTransform {
-
   private severityMap: { [key: number]: string } = {
     1: 'Низький',
     2: 'Помірний',
     3: 'Середній',
     4: 'Високий',
-    5: 'Критичний'
+    5: 'Критичний',
   };
 
   transform(severity: number): string {

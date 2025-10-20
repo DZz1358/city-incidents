@@ -18,7 +18,7 @@ export enum IncidentCategory {
   InfrastructureFailure = 'Поломка інфраструктури',
   Explosion = 'Вибух',
   TransportDisruption = 'Збій транспорту',
-  MedicalEmergency = 'Медична надзвичайна ситуація'
+  MedicalEmergency = 'Медична надзвичайна ситуація',
 }
 
 export enum IncidentSeverity {
@@ -29,6 +29,3 @@ export enum IncidentSeverity {
   High = 4,
   Critical = 5,
 }
-
-
-

@@ -1,6 +1,6 @@
 <section class="table-section">
   <div class="table-header">
-    <mat-form-field appearance="outline" class="search-field">
+    <mat-form-field subscriptSizing="dynamic" appearance="outline" class="search-field">
       <mat-label>Пошук інцедентів</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Введіть текст для пошуку..." />
       <mat-icon matPrefix>search</mat-icon>
@@ -15,7 +15,7 @@
 
   <div class="table-wrapper">
     @if (isLoading()) {
-    <app-loader />
+      <app-loader />
     }
 
     <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort #sort="matSort">
@@ -52,7 +52,7 @@
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата створення</th>
         <td mat-cell *matCellDef="let element">
-          {{ element.createdAt | date : 'dd.MM.yyyy HH:mm' }}
+          {{ element.createdAt | date: 'dd.MM.yyyy HH:mm' }}
         </td>
       </ng-container>
 
@@ -79,6 +79,21 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+
+    @if (!isLoading() && filteredIncidents().length === 0) {
+      <div class="empty-state">
+        <div class="empty-state__icon">
+          <mat-icon class="empty-state__icon-img">search_off</mat-icon>
+        </div>
+
+        <h3 class="empty-state__title">Інциденти не знайдені</h3>
+
+        <p class="empty-state__description">
+          За вашим запитом не знайдено жодного інциденту. Спробуйте змінити параметри фільтрації або
+          перевірте коректність даних.
+        </p>
+      </div>
+    }
   </div>
 
   <mat-paginator

@@ -11,5 +11,4 @@ export interface Incident {
 export interface Location {
   lat: number;
   lng: number;
-
 }

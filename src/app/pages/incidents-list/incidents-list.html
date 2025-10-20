@@ -21,8 +21,6 @@
         (filterChange)="onFilterChange($event)"
       ></app-filters>
     </div>
-
-    <div class="sidebar-actions"></div>
   </mat-sidenav>
 
   <mat-sidenav-content>
@@ -32,7 +30,7 @@
 
     <div class="main-content">
       @if (isLoading()) {
-      <app-loader />
+        <app-loader />
       }
 
       <div id="map"></div>
