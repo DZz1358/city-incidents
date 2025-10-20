@@ -55,23 +55,25 @@
 
 ## 📁 Структура проекту
 
+```
 src/
 ├── app/
-│ ├── core/
-│ │ ├── constants/
-│ │ ├── models/
-│ │ ├── pipes/
-│ │ ├── routes/
-│ │ └── services/
-│ ├── pages/
-│ │ ├── incidents-table/
-│ │ ├── incidents-map/
-│ │ └── incident-details/
-│ └── shared/
-│ ├── components/
-│ └── utils/
+│   ├── core/
+│   │   ├── constants/
+│   │   ├── models/
+│   │   ├── pipes/
+│   │   ├── routes/
+│   │   └── services/
+│   ├── pages/
+│   │   ├── incidents-table/
+│   │   ├── incidents-map/
+│   │   └── incident-details/
+│   └── shared/
+│       ├── components/
+│       └── utils/
 ├── assets/
 └── styles.scss
+```
 
 ## ⚡ Швидкий старт
 
