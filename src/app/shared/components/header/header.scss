@@ -13,3 +13,27 @@ mat-toolbar {
 .active {
   background-color: rgba(0, 0, 0, 0.1);
 }
+
+.header-title {
+  font-size: 20px;
+
+  @media (max-width: 575px) {
+    font-size: 16px;
+  }
+}
+
+.burger-btn {
+  display: none;
+
+  @media (max-width: 575px) {
+    display: flex;
+  }
+}
+
+.navigate-btn {
+  display: flex;
+
+  @media (max-width: 575px) {
+    display: none;
+  }
+}

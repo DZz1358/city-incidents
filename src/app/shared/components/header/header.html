@@ -1,13 +1,28 @@
 <mat-toolbar>
-  <span>Monitoring Incidents</span>
+  <span class="header-title">Monitoring Incidents</span>
   <span class="example-spacer"></span>
 
-  <button mat-button routerLink="/incidents-table" routerLinkActive="active">
+  <button class="burger-btn" matButton [matMenuTriggerFor]="menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item routerLink="/incidents-table" routerLinkActive="active">
+      <mat-icon>table_view</mat-icon>
+      <span>Table View</span>
+    </button>
+    <button mat-menu-item routerLink="/incidents-map" routerLinkActive="active">
+      <mat-icon>map</mat-icon>
+      <span>Map View</span>
+    </button>
+  </mat-menu>
+
+  <button class="navigate-btn" mat-button routerLink="/incidents-table" routerLinkActive="active">
     <mat-icon>table_view</mat-icon>
     Table View
   </button>
 
-  <button mat-button routerLink="/incidents-map" routerLinkActive="active">
+  <button class="navigate-btn" mat-button routerLink="/incidents-map" routerLinkActive="active">
     <mat-icon>map</mat-icon>
     Map View
   </button>

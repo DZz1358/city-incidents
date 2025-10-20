@@ -7,16 +7,12 @@
 @import 'leaflet/dist/leaflet.css';
 
 html {
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$azure-palette,
+  @include mat.theme((color: (primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
       density: -2,
-    )
-  );
+    ));
 }
 
 body {
@@ -91,4 +87,8 @@ body {
 mat-form-field {
   width: 100%;
   max-width: 250px;
+
+  @media (max-width: 575px) {
+    max-width: 100%;
+  }
 }
